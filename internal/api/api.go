@@ -140,15 +140,14 @@ func NewAPIWithVersion(ctx context.Context, globalConfig *conf.GlobalConfigurati
 		r.Get("/settings", api.Settings)
 
 		r.Get("/authorize", api.ExternalProviderRedirect)
-
 		sharedLimiter := api.limitEmailOrPhoneSentHandler()
-		r.With(sharedLimiter).With(api.requireAdminCredentials).Post("/invite", api.Invite)
-		r.With(sharedLimiter).With(api.verifyCaptcha).Post("/signup", api.Signup)
-		r.With(sharedLimiter).With(api.verifyCaptcha).With(api.requireEmailProvider).Post("/recover", api.Recover)
-		r.With(sharedLimiter).With(api.verifyCaptcha).Post("/resend", api.Resend)
-		r.With(sharedLimiter).With(api.verifyCaptcha).Post("/magiclink", api.MagicLink)
+		r.WithBypass(sharedLimiter).With(api.requireAdminCredentials).Post("/invite", api.Invite)
+		r.WithBypass(sharedLimiter).With(api.verifyCaptcha).Post("/signup", api.Signup)
+		r.WithBypass(sharedLimiter).With(api.verifyCaptcha).With(api.requireEmailProvider).Post("/recover", api.Recover)
+		r.WithBypass(sharedLimiter).With(api.verifyCaptcha).Post("/resend", api.Resend)
+		r.WithBypass(sharedLimiter).With(api.verifyCaptcha).Post("/magiclink", api.MagicLink)
 
-		r.With(sharedLimiter).With(api.verifyCaptcha).Post("/otp", api.Otp)
+		r.WithBypass(sharedLimiter).With(api.verifyCaptcha).Post("/otp", api.Otp)
 
 		r.With(api.limitHandler(
 			// Allow requests at the specified rate per 5 minutes.
@@ -175,7 +174,7 @@ func NewAPIWithVersion(ctx context.Context, globalConfig *conf.GlobalConfigurati
 
 		r.With(api.requireAuthentication).Route("/user", func(r *router) {
 			r.Get("/", api.UserGet)
-			r.With(sharedLimiter).Put("/", api.UserUpdate)
+			r.WithBypass(sharedLimiter).Put("/", api.UserUpdate)
 
 			r.Route("/identities", func(r *router) {
 				r.Use(api.requireManualLinkingEnabled)
